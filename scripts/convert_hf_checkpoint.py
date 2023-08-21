@@ -148,7 +148,7 @@ def copy_weights_hf_llama(
             to_name = to_name.format(number)
         else:
             to_name = weight_map[name]
-        param = load_param(param, name, param)
+        param = load_param(param, name, dtype)
         if saver is not None:
             param = saver.store_early(param)
         state_dict[to_name] = param
@@ -181,17 +181,20 @@ def layer_template(layer_name: str, idx: int) -> Tuple[str, int]:
 def load_param(param: Union[torch.Tensor, NotYetLoadedTensor], name: str, dtype: Optional[torch.dtype]) -> torch.Tensor:
     if hasattr(param, "_load_tensor"):
         # support tensors loaded via `lazy_load()`
-        print(f"Loading {name} into RAM")
+        print(f"Loading {name!r} into RAM")
         param = param._load_tensor()
-    if dtype != param.dtype:
-        print(f"Converting {name} from {param.dtype} to {dtype}")
+    if dtype is not None and type(dtype) is not NotYetLoadedTensor and dtype != param.dtype:
+        print(f"Converting {name!r} from {param.dtype} to {dtype}")
         param = param.to(dtype)
     return param
 
 
 @torch.inference_mode()
 def convert_hf_checkpoint(
-    *, checkpoint_dir: Path = Path("checkpoints/stabilityai/stablelm-base-alpha-3b"), model_name: Optional[str] = None, dtype: Optional[str] = None
+    *,
+    checkpoint_dir: Path = Path("checkpoints/stabilityai/stablelm-base-alpha-3b"),
+    model_name: Optional[str] = None,
+    dtype: Optional[str] = None,
 ) -> None:
     if model_name is None:
         model_name = checkpoint_dir.name

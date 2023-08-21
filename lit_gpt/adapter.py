@@ -6,7 +6,7 @@ https://arxiv.org/abs/2303.16199
 Port for Lit-GPT
 """
 from dataclasses import dataclass
-from typing import Any, List, Optional, Tuple, Union, Dict
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -268,10 +268,7 @@ class CausalSelfAttention(BaseCausalSelfAttention):
 
     def _load_from_state_dict(self, state_dict: Dict, prefix: str, *args: Any, **kwargs: Any) -> None:
         """For compatibility with older checkpoints."""
-        if (
-            (key := prefix + "gating_factor") in state_dict
-            and state_dict[key].size(1) == self.config.n_head
-        ):
+        if (key := prefix + "gating_factor") in state_dict and state_dict[key].size(1) == self.config.n_head:
             state_dict[key] = state_dict[key].permute(0, 2, 1, 3)
         super()._load_from_state_dict(state_dict, prefix, *args, **kwargs)
 
